@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>Library</OutputType>
+	</PropertyGroup>
+
+	<PropertyGroup Label="NuGet">
+		<!-- Version, Authors and PackageLicenseExpression are already set in ../Directory.Build.props -->
+		<PackageId>Implement.Net</PackageId>
+		<Title>Implement.Net</Title>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageReadmeFile>./README.md</PackageReadmeFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="../README.md" Pack="true" PackagePath="/"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="JetBrains.Annotations" Version="2021.1.0"/>
+	</ItemGroup>
+
+</Project>

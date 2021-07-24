@@ -1,0 +1,43 @@
+<Project>
+	<PropertyGroup Label="Version">
+		<Version>1.0.0</Version>
+	</PropertyGroup>
+
+	<PropertyGroup Label="Framework and Language">
+		<TargetFramework>net5.0</TargetFramework>
+		<LangVersion>latest</LangVersion>
+		<Nullable>enable</Nullable>
+
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	</PropertyGroup>
+
+	<PropertyGroup Label="General Information">
+		<Authors>Sebastian Göls</Authors>
+		<Copyright>Copyright © 2021-$([System.DateTime]::UtcNow.Year) Sebastian Göls</Copyright>
+		<Description>Implement.Net is a C# library with the primary purpose of implementing interfaces at runtime by forwarding calls to their members to a statically typed handler.</Description>
+		<PackageLicenseExpression>LGPL-2.1-only</PackageLicenseExpression>
+		<NeutralLanguage>en</NeutralLanguage>
+		<PackageProjectUrl>https://github.com/Abrynos/Implement.Net</PackageProjectUrl>
+		<RepositoryType>Git</RepositoryType>
+		<RepositoryUrl>https://github.com/Abrynos/Implement.Net.git</RepositoryUrl>
+	</PropertyGroup>
+
+	<PropertyGroup Label="Compiler Settings">
+		<ErrorReport>none</ErrorReport>
+		<Deterministic>true</Deterministic>
+	</PropertyGroup>
+
+	<PropertyGroup Label="Static Analysis">
+		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
+		<WarningsAsErrors/>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<NoWarn>CA1028,CA1031</NoWarn>
+		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+	</PropertyGroup>
+
+	<PropertyGroup Label="Release Configuration" Condition="'$(Configuration)' == 'Release'">
+		<DebugSymbols>false</DebugSymbols>
+		<DebugType>none</DebugType>
+		<DebuggerSupport>false</DebuggerSupport>
+	</PropertyGroup>
+</Project>

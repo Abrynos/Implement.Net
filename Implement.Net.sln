@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Implement.Net", "Implement.Net\Implement.Net.csproj", "{1C04E099-1D96-4DFC-BDBA-34E3A626C7DA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Implement.Net.Tests", "Implement.Net.Tests\Implement.Net.Tests.csproj", "{FCBC580A-C1ED-416C-B82E-B88D45BEE12A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1C04E099-1D96-4DFC-BDBA-34E3A626C7DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C04E099-1D96-4DFC-BDBA-34E3A626C7DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C04E099-1D96-4DFC-BDBA-34E3A626C7DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C04E099-1D96-4DFC-BDBA-34E3A626C7DA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FCBC580A-C1ED-416C-B82E-B88D45BEE12A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FCBC580A-C1ED-416C-B82E-B88D45BEE12A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FCBC580A-C1ED-416C-B82E-B88D45BEE12A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FCBC580A-C1ED-416C-B82E-B88D45BEE12A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
