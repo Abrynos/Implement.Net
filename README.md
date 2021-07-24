@@ -84,6 +84,7 @@ We have extensive documentation in form of XML-comments in our source code. Thes
 There are several pre-conditions that must be met for type-generation to succeed. Most notably are the need for the interface to be `public` and the prohibition of unbound generic methods within it.
 
 Here are some examples of what will or will not work:
+
 ```c#
 public interface MySecondInterface<TInterfaceParameter> {
 	// This will work
@@ -100,10 +101,12 @@ public interface MySecondInterface<TInterfaceParameter> {
 	void SomeMethod<TMethodParameter>(TMethodParameter p);
 }
 ```
+
 ```c#
 // This will not work - The interface has to be public
 internal interface MyThirdInterface { }
 ```
+
 ```c#
 // This will work
 new TypeFactory.CreateType(typeof(SomeGenericInterface<int>));

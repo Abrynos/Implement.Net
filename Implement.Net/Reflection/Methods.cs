@@ -63,7 +63,7 @@ namespace Implement.Net.Reflection {
 		}
 
 		internal static class Object {
-			internal new static readonly MethodInfo GetType = ((Expression<Func<object, System.Type>>) (obj => obj.GetType())).GetMethodInfo();
+			internal static new readonly MethodInfo GetType = ((Expression<Func<object, System.Type>>) (obj => obj.GetType())).GetMethodInfo();
 		}
 
 		internal static class ObjectList {

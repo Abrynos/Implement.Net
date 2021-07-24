@@ -1,5 +1,6 @@
 ﻿<component name="ProjectCodeStyleConfiguration">
   <code_scheme name="Project" version="173">
+    <option name="AUTODETECT_INDENTS" value="false" />
     <option name="OTHER_INDENT_OPTIONS">
       <value>
         <option name="USE_TAB_CHARACTER" value="true" />
@@ -19,6 +20,11 @@
       </indentOptions>
     </codeStyleSettings>
     <codeStyleSettings language="CoffeeScript">
+      <indentOptions>
+        <option name="USE_TAB_CHARACTER" value="true" />
+      </indentOptions>
+    </codeStyleSettings>
+    <codeStyleSettings language="Gherkin">
       <indentOptions>
         <option name="USE_TAB_CHARACTER" value="true" />
       </indentOptions>
@@ -49,6 +55,7 @@
       </indentOptions>
     </codeStyleSettings>
     <codeStyleSettings language="Markdown">
+      <option name="RIGHT_MARGIN" value="999" />
       <indentOptions>
         <option name="USE_TAB_CHARACTER" value="true" />
       </indentOptions>

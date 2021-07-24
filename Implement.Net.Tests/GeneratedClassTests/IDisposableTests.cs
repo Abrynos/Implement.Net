@@ -32,8 +32,8 @@ using Implement.Net.Tests.Utilities.Interfaces;
 using Xunit;
 
 namespace Implement.Net.Tests.GeneratedClassTests {
-#pragma warning disable CA2000
 	// ReSharper disable once InconsistentNaming
+#pragma warning disable CA2000
 	public sealed class IDisposableTests : AbstractGeneratedInstanceTest {
 		[Fact]
 		public void BooleanOptionForcesImplementation() {

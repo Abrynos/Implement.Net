@@ -165,8 +165,8 @@ namespace Implement.Net.Tests.GeneratedClassTests {
 		public void MixedParameterValuesMatch() {
 			const int value = 42;
 
+			// ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local
 			CallbackHandler.MethodInvoker = MethodInvoker(
-				// ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local
 				true,
 				(_, parameters) => {
 					Assert.Equal(value, parameters.First());
