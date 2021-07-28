@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+env:
+  CONFIGURATION: Release
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  TEST_PROJECT_NAME: Implement.Net.Tests
+  OUTPUT_DIRECTORY: "./out"
+  RELEVANT_OUTPUT_FILES: "./out/*.nupkg"
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Add release tag to environment
+        run: echo "RELEASE_TAG=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - name: Set .NET core up
+        uses: actions/setup-dotnet@v1.8.1
+        with:
+          dotnet-version: 5.0.x
+
+      - name: Verify .NET core
+        run: dotnet --info
+
+      - name: Build all projects
+        run: dotnet build --configuration "${{ env.CONFIGURATION }}" -p:ContinuousIntegrationBuild=true
+
+      - name: Run tests
+        run: dotnet test "${{ env.TEST_PROJECT_NAME }}" --configuration "${{ env.CONFIGURATION }}" -p:ContinuousIntegrationBuild=true
+
+      - name: Pack
+        run: dotnet pack --configuration ${{ env.CONFIGURATION }} --output "${{ env.OUTPUT_DIRECTORY }}"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: ${{ env.RELEVANT_OUTPUT_FILES }}
+          tag_name: ${{ env.RELEASE_TAG }}
+
+      - name: Push to NuGet
+        run: dotnet nuget push "${{ env.RELEVANT_OUTPUT_FILES }}" --api-key ${{ secrets.NUGET_TOKEN }} --source https://api.nuget.org/v3/index.json

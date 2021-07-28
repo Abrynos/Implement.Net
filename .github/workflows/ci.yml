@@ -1,0 +1,35 @@
+name: CI
+
+on: [ push, pull_request ]
+
+env:
+  CONFIGURATION: Release
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  TEST_PROJECT_NAME: Implement.Net.Tests
+
+jobs:
+  main:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ macos-latest, ubuntu-latest, windows-latest ]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set .NET core up
+        uses: actions/setup-dotnet@v1.8.1
+        with:
+          dotnet-version: 5.0.x
+
+      - name: Verify .NET core
+        run: dotnet --info
+
+      - name: Build all projects
+        run: dotnet build --configuration "${{ env.CONFIGURATION }}" -p:ContinuousIntegrationBuild=true
+
+      - name: Run tests
+        run: dotnet test "${{ env.TEST_PROJECT_NAME }}" --configuration "${{ env.CONFIGURATION }}" -p:ContinuousIntegrationBuild=true
