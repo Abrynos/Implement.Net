@@ -1,0 +1,84 @@
+name: "📕 Documentation improvement"
+description: "All issues related to documentation; mainly corrections and improvement ideas"
+labels: ["📙 documentation", "👀 evaluation"]
+body:
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      description: Ensure that our bug report form is appropriate for you.
+      options:
+        - label: I read and understood the **[Contributing Guidelines](https://github.com/Abrynos/Implement.Net/blob/master/.github/CONTRIBUTING.md)**.
+          required: true
+        - label: This is not a **[question](https://github.com/Abrynos/Implement.Net/discussions)**.
+          required: true
+        - label: This is not a **[technical issue](https://github.com/Abrynos/Implement.Net/discussions)**.
+          required: true
+
+  - type: input
+    id: class-method-property
+    attributes:
+      label: Affected class/method/property
+      description: Tell us the name of the class, method or property which is not properly documented in your opinion.
+      placeholder: |
+        ???
+    validations:
+      required: true
+
+  - type: textarea
+    id: issue
+    attributes:
+      label: The issue
+      description: Please specify your issue in regards to our documentation.
+      placeholder: |
+        If you are reporting a mistake/correction, state what is wrong.
+        
+        If you are suggesting an addition, explain the details.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Possible solution
+      description: The new or corrected text that would satisfy your issue stated above.
+      placeholder: |
+        We're no strangers to love
+        You know the rules and so do I
+        A full commitment's what I'm thinking of
+        You wouldn't get this from any other guy
+
+        I just wanna tell you how I'm feeling
+        Gotta make you understand
+
+        Never gonna give you up
+        Never gonna let you down
+        Never gonna run around and desert you
+        Never gonna make you cry
+        Never gonna say goodbye
+        Never gonna tell a lie and hurt you
+    validations:
+      required: true
+
+  - type: dropdown
+    id: help
+    attributes:
+      label: Can you help us with this improvement?
+      description: This library is offered for free and our resources are limited. Helping us increases the chance of making it happen.
+      options:
+        - Yes, I can add the solution myself and send a merge request.
+        - No, I don't have time, skills or willings for any of that.
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: Additional information
+      description: Everything else you consider note-worthy that we didn't ask for.
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        #### Thank you for taking the time to fill out this bug report.
