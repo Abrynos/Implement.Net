@@ -118,14 +118,15 @@ internal interface MyThirdInterface { }
 ```
 
 ```c#
+TypeFactory typeFactory = new ();
 // This will work
-new TypeFactory.CreateType(typeof(SomeGenericInterface<int>));
+typeFactory.CreateType(typeof(SomeGenericInterface<int>));
 // This will fail - There are unbound generic parameters
-new TypeFactory.CreateType(typeof(SomeGenericInterface<>));
+typeFactory.CreateType(typeof(SomeGenericInterface<>));
 // This will fail - You can derive from it tho
-new TypeFactory.CreateType(typeof(IDisposable));
+typeFactory.CreateType(typeof(IDisposable));
 // This will fail - TypeFactory is not an interface
-new TypeFactory.CreateType(typeof(TypeFactory));
+typeFactory.CreateType(typeof(TypeFactory));
 ```
 
 ## FAQ
