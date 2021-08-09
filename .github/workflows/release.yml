@@ -11,6 +11,7 @@ env:
   TEST_PROJECT_NAME: Implement.Net.Tests
   OUTPUT_DIRECTORY: "./out"
   RELEVANT_OUTPUT_FILES: "./out/*.nupkg"
+  GH_SOURCE_NAME: "github"
 
 jobs:
   main:
@@ -40,7 +41,7 @@ jobs:
         run: dotnet test "${{ env.TEST_PROJECT_NAME }}" --configuration "${{ env.CONFIGURATION }}" -p:ContinuousIntegrationBuild=true
 
       - name: Pack
-        run: dotnet pack --configuration ${{ env.CONFIGURATION }} --output "${{ env.OUTPUT_DIRECTORY }}"
+        run: dotnet pack --configuration "${{ env.CONFIGURATION }}" --output "${{ env.OUTPUT_DIRECTORY }}"
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v1
@@ -51,4 +52,10 @@ jobs:
           tag_name: ${{ env.RELEASE_TAG }}
 
       - name: Push to NuGet
-        run: dotnet nuget push "${{ env.RELEVANT_OUTPUT_FILES }}" --api-key ${{ secrets.NUGET_TOKEN }} --source https://api.nuget.org/v3/index.json
+        run: dotnet nuget push "${{ env.RELEVANT_OUTPUT_FILES }}" --api-key "${{ secrets.NUGET_TOKEN }}" --source "https://api.nuget.org/v3/index.json"
+
+      - name: Add GitHub as nuget source
+        run: dotnet nuget add source --username "${GITHUB_REPOSITORY%%/*}" --password "${{ secrets.GITHUB_TOKEN }}" --store-password-in-clear-text --name "${{ env.GH_SOURCE_NAME }}" "https://nuget.pkg.github.com/${GITHUB_REPOSITORY%%/*}/index.json"
+
+      - name: Push to GitHub
+        run: dotnet nuget push "${{ env.RELEVANT_OUTPUT_FILES }}" --api-key "${{ secrets.GH_NUGET_TOKEN }}" --source "${{ env.GH_SOURCE_NAME }}"
