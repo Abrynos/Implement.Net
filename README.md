@@ -12,11 +12,21 @@ Make sure this is what you need. There is a very limited amount of actual use ca
 
 ### Step 1: Dependency
 
-From the command line add the dependency to your project. Alternatively you can do this in your IDE as well.
+From the command line add the dependency to your project:
 
 ```bash
 dotnet add package Implement.Net
 ```
+
+Alternatively you can edit your `.csproj` file directly. Just make sure you replace the `*` from the example below with the version you want to use:
+
+```xml
+	<ItemGroup>
+		<PackageReference Include="Implement.Net" Version="*" />
+	</ItemGroup>
+```
+
+In addition to the official NuGet registry we also push to [GitHub packages](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-nuget-registry).
 
 ### Step 2: Handler implementation
 
@@ -117,3 +127,9 @@ new TypeFactory.CreateType(typeof(IDisposable));
 // This will fail - TypeFactory is not an interface
 new TypeFactory.CreateType(typeof(TypeFactory));
 ```
+
+## FAQ
+
+### What's the difference between this and the `dynamic` keyword?
+
+This allows for static typing. The "end user" can use a predefined interface instead of `dynamic`.
