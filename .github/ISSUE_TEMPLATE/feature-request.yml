@@ -1,6 +1,6 @@
 name: "✨ Feature request"
 description: "Suggest an idea for this project"
-labels: ["✨ enhancement", "👀 evaluation"]
+labels: [ "✨ enhancement", "👀 evaluation" ]
 body:
   - type: checkboxes
     id: checklist
@@ -48,7 +48,7 @@ body:
       description: Evaluate the existing solutions in regards to your requirements.
       placeholder: |
         If something you are suggesting is already possible, then explain to us why the currently available solutions are not sufficient.
-        
+
         If it's not possible yet, then explain to us why it should be.
     validations:
       required: true

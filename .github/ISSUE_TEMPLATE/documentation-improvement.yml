@@ -1,6 +1,6 @@
 name: "📕 Documentation improvement"
 description: "All issues related to documentation; mainly corrections and improvement ideas"
-labels: ["📙 documentation", "👀 evaluation"]
+labels: [ "📙 documentation", "👀 evaluation" ]
 body:
   - type: checkboxes
     id: checklist
@@ -32,7 +32,7 @@ body:
       description: Please specify your issue in regards to our documentation.
       placeholder: |
         If you are reporting a mistake/correction, state what is wrong.
-        
+
         If you are suggesting an addition, explain the details.
     validations:
       required: true

@@ -1,10 +1,10 @@
 name: "🐛 Bug report"
 description: "Unexpected program behaviour that needs code correction"
-labels: ["🐛 bug", "👀 evaluation"]
+labels: [ "🐛 bug", "👀 evaluation" ]
 body:
   - type: checkboxes
     id: checklist
-    attributes: 
+    attributes:
       label: Checklist
       description: Ensure that our bug report form is appropriate for you.
       options:
@@ -16,10 +16,10 @@ body:
           required: true
         - label: This is not a **[duplicate](https://github.com/Abrynos/Implement.Net/issues)** of an existing issue.
           required: true
-          
+
   - type: dropdown
     id: version
-    attributes: 
+    attributes:
       label: Version
       description: If you are using a version that is different from the current **[stable](https://github.com/Abrynos/Implement.Net/releases/latest)** or **[pre-release](https://github.com/Abrynos/Implement.Net/releases)**, please ensure that your bug is reproducible on at least one of them.
       options:
@@ -27,7 +27,7 @@ body:
         - Latest pre-release
     validations:
       required: true
-      
+
   - type: textarea
     id: bug-description
     attributes:
@@ -37,7 +37,7 @@ body:
         I tried to brew a coffee using the library, but upon trying the library threw a `CookieException`.
     validations:
       required: true
-      
+
   - type: textarea
     id: expected-behaviour
     attributes:
@@ -87,13 +87,13 @@ body:
         - No, I don't have time, skills or willings for any of that.
     validations:
       required: true
-      
+
   - type: textarea
     id: additional-info
     attributes:
       label: Additional information
       description: Everything else you consider note-worthy that we didn't ask for.
-      
+
   - type: markdown
     attributes:
       value: |
