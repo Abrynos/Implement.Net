@@ -69,7 +69,7 @@ You can most likely skip this step, as the primary use-case for this is to provi
 
 ```c#
 public interface MyInterface {
-	public int SomeValue { get; set }
+	public int SomeValue { get; set; }
 }
 ```
 
