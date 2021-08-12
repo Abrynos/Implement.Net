@@ -1,0 +1,12 @@
+# standard settings
+*	text=auto eol=lf
+
+# dotnet
+*.sln	merge=union	working-tree-encoding=UTF-8
+*.csproj	merge=union	working-tree-encoding=UTF-8
+*.cs	diff=csharp	working-tree-encoding=UTF-8
+
+# others
+*.md	working-tree-encoding=UTF-8
+*.txt	working-tree-encoding=UTF-8
+*.DotSettings	working-tree-encoding=UTF-8
