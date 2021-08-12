@@ -10,6 +10,7 @@
 		<Title>Implement.Net</Title>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageReadmeFile>./README.md</PackageReadmeFile>
+		<PackageReleaseNotes>https://github.com/Abrynos/Implement.Net/releases</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>
