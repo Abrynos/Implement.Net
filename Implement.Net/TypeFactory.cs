@@ -396,9 +396,9 @@ namespace Implement.Net {
 			markFinal
 		);
 
-		private static void CreateConstructor(TypeBuilder typeBuilder, FieldInfo field) {
+		private static void CreateConstructor(TypeBuilder typeBuilder, FieldInfo handlerField) {
 			const string parameterName = "handler";
-			ConstructorBuilder constructorBuilder = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, new[] { field.FieldType });
+			ConstructorBuilder constructorBuilder = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, new[] { handlerField.FieldType });
 
 			ParameterBuilder fieldParameter = constructorBuilder.DefineParameter(1, ParameterAttributes.In, parameterName);
 
@@ -423,7 +423,7 @@ namespace Implement.Net {
 			// this.[handlerField] = [fieldParameter];
 			generator.Emit(OpCodes.Ldarg_0);
 			generator.Emit(OpCodes.Ldarg, fieldParameter.Position);
-			generator.Emit(OpCodes.Stfld, field);
+			generator.Emit(OpCodes.Stfld, handlerField);
 
 			// return;
 			generator.Emit(OpCodes.Ret);
@@ -506,7 +506,7 @@ namespace Implement.Net {
 			generator => {
 				Label doNothingLabel = generator.DefineLabel();
 
-				// if (this.[field] != null) {
+				// if (this.[handlerField] != null) {
 				generator.Emit(OpCodes.Ldarg_0);
 				generator.Emit(OpCodes.Ldfld, handlerField);
 				generator.Emit(OpCodes.Ldnull);
@@ -514,7 +514,7 @@ namespace Implement.Net {
 				generator.Emit(OpCodes.Brtrue, doNothingLabel);
 
 				if (checkInstance) {
-					// if (this.[field] is IDisposable) {
+					// if (this.[handlerField] is IDisposable) {
 					generator.Emit(OpCodes.Ldarg_0);
 					generator.Emit(OpCodes.Ldfld, handlerField);
 					generator.Emit(OpCodes.Isinst, Types.IDisposable);
@@ -523,11 +523,12 @@ namespace Implement.Net {
 					generator.Emit(OpCodes.Brfalse_S, doNothingLabel);
 				}
 
-				// this.[field].Dispose();
+				// this.[handlerField].Dispose();
 				generator.Emit(OpCodes.Ldarg_0);
 				generator.Emit(OpCodes.Ldfld, handlerField);
 				generator.EmitCall(OpCodes.Callvirt, Methods.IDisposable.Dispose, null);
 
+				// }
 				// }
 				generator.MarkLabel(doNothingLabel);
 
