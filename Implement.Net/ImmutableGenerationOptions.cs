@@ -50,11 +50,11 @@ namespace Implement.Net {
 
 		public override int GetHashCode() => HashCode.Combine(EnforceDisposable, HandlerType, ObjectMethodBehaviour);
 
-		internal static ImmutableGenerationOptions FromOptions(GenerationOptions options) => new (options);
-
 		private bool Equals(ImmutableGenerationOptions other) => EnforceDisposable == other.EnforceDisposable
 																 && HandlerType == other.HandlerType
 																 && ObjectMethodBehaviour == other.ObjectMethodBehaviour
 																 && SealTypeAndMethods == other.SealTypeAndMethods;
+
+		internal static ImmutableGenerationOptions FromOptions(GenerationOptions options) => new (options);
 	}
 }

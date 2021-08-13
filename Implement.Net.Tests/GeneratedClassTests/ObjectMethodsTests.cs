@@ -172,17 +172,19 @@ namespace Implement.Net.Tests.GeneratedClassTests {
 		}
 
 		private sealed class ObjectMethodHandler : DefaultHandler {
-			private readonly Action FinalizeAction;
-
 			internal bool EqualsCalled { get; private set; }
 
 			internal bool GetHashCodeCalled { get; private set; }
 
 			internal bool ToStringCalled { get; private set; }
 
+			private readonly Action FinalizeAction;
+
 			internal ObjectMethodHandler() : this(() => { }) { }
 
 			internal ObjectMethodHandler(Action finalizeAction) => FinalizeAction = finalizeAction;
+
+			~ObjectMethodHandler() => FinalizeAction.Invoke();
 
 			public override bool Equals(object? obj) {
 				EqualsCalled = true;
@@ -202,8 +204,6 @@ namespace Implement.Net.Tests.GeneratedClassTests {
 
 				return string.Empty;
 			}
-
-			~ObjectMethodHandler() => FinalizeAction.Invoke();
 		}
 	}
 }

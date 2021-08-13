@@ -29,6 +29,7 @@ using System;
 namespace Implement.Net.Tests {
 	public abstract class AbstractTest {
 		protected GenerationOptions Options { get; } = new ();
+
 		protected TypeFactory TypeFactory { get; } = new ();
 
 		protected Type CreateType<TInterface>(GenerationOptions? options = null) where TInterface : class => TypeFactory.CreateType<TInterface>(options ?? Options);

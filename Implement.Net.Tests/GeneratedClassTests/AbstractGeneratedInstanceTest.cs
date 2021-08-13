@@ -34,9 +34,9 @@ namespace Implement.Net.Tests.GeneratedClassTests {
 
 		protected DefaultHandler DefaultHandler { get; } = new ();
 
-		protected static TInterface CreateInstance<TInterface>(Type type, IDynamicHandler? handler = null) where TInterface : class => (Activator.CreateInstance(type, handler ?? new DefaultHandler()) as TInterface)!;
-
 		protected TInterface CreateInstance<TInterface>(IDynamicHandler? handler = null) where TInterface : class => (Activator.CreateInstance(CreateType<TInterface>(), handler ?? new DefaultHandler()) as TInterface)!;
+
+		protected static TInterface CreateInstance<TInterface>(Type type, IDynamicHandler? handler = null) where TInterface : class => (Activator.CreateInstance(type, handler ?? new DefaultHandler()) as TInterface)!;
 
 		protected static CallbackHandler.EventDelegate EventModifier(bool success, Action additionalAction) => EventModifier(success, (_, _, _) => additionalAction.Invoke());
 
