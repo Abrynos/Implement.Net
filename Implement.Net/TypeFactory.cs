@@ -66,6 +66,7 @@ namespace Implement.Net {
 		/// <exception cref="ArgumentException"><typeparamref name="TInterface"/> is not public</exception>
 		/// <exception cref="ArgumentException"><typeparamref name="TInterface"/> contains one or more unbound generic methods</exception>
 		/// <exception cref="ArgumentException"><typeparamref name="TInterface"/> is equal to <see cref="IDisposable"/></exception>
+		/// <exception cref="ArgumentException"><typeparamref name="TInterface"/> is equal to <see cref="IAsyncDisposable"/></exception>
 		/// <seealso cref="GenerationOptions"/>
 		[PublicAPI]
 		public Type CreateType<TInterface>(GenerationOptions? options = null) where TInterface : class => CreateType(typeof(TInterface), options);
@@ -82,6 +83,7 @@ namespace Implement.Net {
 		/// <exception cref="ArgumentException"><paramref name="interfaceType"/> is an unbound generic type</exception>
 		/// <exception cref="ArgumentException"><paramref name="interfaceType"/> contains one or more unbound generic methods</exception>
 		/// <exception cref="ArgumentException"><paramref name="interfaceType"/> is equal to <see cref="IDisposable"/></exception>
+		/// <exception cref="ArgumentException"><paramref name="interfaceType"/> is equal to <see cref="IAsyncDisposable"/></exception>
 		/// <seealso cref="GenerationOptions"/>
 		[PublicAPI]
 		public Type CreateType(Type interfaceType, GenerationOptions? options = null) => CreateTypeInternal(interfaceType, (options ?? new GenerationOptions()).ToImmutableOptions());
@@ -145,6 +147,63 @@ namespace Implement.Net {
 		/// <seealso cref="CreateType(Type,GenerationOptions)"/>
 		[PublicAPI]
 		public bool TryCreateType(Type interfaceType, out Type? result) => TryCreateType(interfaceType, new GenerationOptions(), out result);
+
+		private Type CreateTypeInternal(Type interfaceType, ImmutableGenerationOptions options) => interfaceType switch {
+			null => throw new ArgumentNullException(nameof(interfaceType)),
+			{ IsInterface: false } => throw new ArgumentException($"!{nameof(interfaceType)}.{nameof(interfaceType.IsInterface)}"),
+			{ IsPublic: false } => throw new ArgumentException($"!{nameof(interfaceType)}.{nameof(interfaceType.IsPublic)}"),
+			{ } iface when iface == Types.IDisposable => throw new ArgumentException($"{nameof(interfaceType)} == typeof({nameof(IDisposable)})"),
+			{ } iface when iface == Types.IAsyncDisposable => throw new ArgumentException($"{nameof(interfaceType)} == typeof({nameof(IAsyncDisposable)})"),
+			{ IsGenericType: true, IsConstructedGenericType: false } => throw new ArgumentException($"{nameof(interfaceType)}.{nameof(interfaceType.IsGenericType)} && !{nameof(interfaceType)}.{nameof(interfaceType.IsConstructedGenericType)}"),
+			_ => options.IgnoreCache
+				? GenerateNewType(interfaceType, options)
+				: Cache.GetOrAdd((interfaceType, options), key => GenerateNewType(key.Interface, key.Options))
+		};
+
+		private Type GenerateNewType(Type interfaceType, ImmutableGenerationOptions options) {
+			TypeAttributes attributes = TypeAttributes.Public;
+
+			if (options.SealTypeAndMethods) {
+				attributes |= TypeAttributes.Sealed;
+			}
+
+			TypeBuilder typeBuilder = ModuleBuilder.DefineType($"{GeneratedTypeNamespace}._{Guid.NewGuid():N}", attributes);
+			typeBuilder.SetParent(Types.Object);
+			typeBuilder.AddInterfaceImplementation(interfaceType);
+
+			FieldBuilder handlerField = typeBuilder.DefineField("_Handler", options.HandlerType, FieldAttributes.Private | FieldAttributes.InitOnly);
+
+			CreateConstructor(typeBuilder, handlerField);
+
+			bool isHandlerDisposable = options.HandlerType.IsAssignableTo(Types.IDisposable);
+
+			if (isHandlerDisposable || interfaceType.IsAssignableTo(Types.IDisposable) || options.EnforceDisposable) {
+				typeBuilder.AddInterfaceImplementation(Types.IDisposable);
+				ImplementDispose(typeBuilder, handlerField, !isHandlerDisposable);
+			}
+
+			if (options.ObjectMethodBehaviour != GenerationOptions.EObjectMethodBehaviour.Ignore) {
+				ImplementObjectMethods(typeBuilder, handlerField, options);
+			}
+
+			foreach (MethodInfo baseMethod in interfaceType.GetMethodsRecursive(RelevantFlagsForBinding)
+														   .Where(method => method.DeclaringType != Types.IDisposable)
+														   .Where(method => method.IsVirtual)
+														   .Where(method => !method.IsSpecialName)
+														   .Where(method => !method.IsFinal)) {
+				BindMethod(typeBuilder, baseMethod, handlerField, options.SealTypeAndMethods);
+			}
+
+			foreach (PropertyInfo baseProperty in interfaceType.GetPropertiesRecursive(RelevantFlagsForBinding)) {
+				BindProperty(typeBuilder, baseProperty, handlerField, options.SealTypeAndMethods);
+			}
+
+			foreach (EventInfo baseEvent in interfaceType.GetEventsRecursive(RelevantFlagsForBinding)) {
+				BindEvent(typeBuilder, baseEvent, handlerField, options.SealTypeAndMethods);
+			}
+
+			return typeBuilder.CreateType()!;
+		}
 
 		private static void BindEvent(TypeBuilder typeBuilder, EventInfo baseEvent, FieldInfo handlerField, bool markFinal) {
 			EventBuilder eventBuilder = typeBuilder.DefineEvent(baseEvent.Name, baseEvent.Attributes, baseEvent.EventHandlerType!);
@@ -370,25 +429,6 @@ namespace Implement.Net {
 			generator.Emit(OpCodes.Ret);
 		}
 
-		private Type CreateTypeInternal(Type interfaceType, ImmutableGenerationOptions options) {
-			switch (interfaceType) {
-				case null:
-					throw new ArgumentNullException(nameof(interfaceType));
-				case { IsInterface: false }:
-					throw new ArgumentException($"!{nameof(interfaceType)}.{nameof(interfaceType.IsInterface)}");
-				case { IsPublic: false }:
-					throw new ArgumentException($"!{nameof(interfaceType)}.{nameof(interfaceType.IsPublic)}");
-				case { } iface when iface == Types.IDisposable:
-					throw new ArgumentException($"{nameof(interfaceType)} == typeof({nameof(IDisposable)})");
-				case { IsGenericType: true, IsConstructedGenericType: false }:
-					throw new ArgumentException($"{nameof(interfaceType)}.{nameof(interfaceType.IsGenericType)} && !{nameof(interfaceType)}.{nameof(interfaceType.IsConstructedGenericType)}");
-			}
-
-			return options.IgnoreCache
-				? GenerateNewType(interfaceType, options)
-				: Cache.GetOrAdd((interfaceType, options), key => GenerateNewType(key.Interface, key.Options));
-		}
-
 		private static void EmitLoadAndUnboxIfNecessary(ILGenerator generator, LocalBuilder local, Type type) {
 			generator.Emit(OpCodes.Ldloc, local);
 
@@ -459,51 +499,6 @@ namespace Implement.Net {
 			},
 			markFinal
 		);
-
-		private Type GenerateNewType(Type interfaceType, ImmutableGenerationOptions options) {
-			TypeAttributes attributes = TypeAttributes.Public;
-
-			if (options.SealTypeAndMethods) {
-				attributes |= TypeAttributes.Sealed;
-			}
-
-			TypeBuilder typeBuilder = ModuleBuilder.DefineType($"{GeneratedTypeNamespace}._{Guid.NewGuid():N}", attributes);
-			typeBuilder.SetParent(Types.Object);
-			typeBuilder.AddInterfaceImplementation(interfaceType);
-
-			FieldBuilder handlerField = typeBuilder.DefineField("_Handler", options.HandlerType, FieldAttributes.Private | FieldAttributes.InitOnly);
-
-			CreateConstructor(typeBuilder, handlerField);
-
-			bool isHandlerDisposable = options.HandlerType.IsAssignableTo(Types.IDisposable);
-
-			if (isHandlerDisposable || interfaceType.IsAssignableTo(Types.IDisposable) || options.EnforceDisposable) {
-				typeBuilder.AddInterfaceImplementation(Types.IDisposable);
-				ImplementDispose(typeBuilder, handlerField, !isHandlerDisposable);
-			}
-
-			if (options.ObjectMethodBehaviour != GenerationOptions.EObjectMethodBehaviour.Ignore) {
-				ImplementObjectMethods(typeBuilder, handlerField, options);
-			}
-
-			foreach (MethodInfo baseMethod in interfaceType.GetMethodsRecursive(RelevantFlagsForBinding)
-														   .Where(method => method.DeclaringType != Types.IDisposable)
-														   .Where(method => method.IsVirtual)
-														   .Where(method => !method.IsSpecialName)
-														   .Where(method => !method.IsFinal)) {
-				BindMethod(typeBuilder, baseMethod, handlerField, options.SealTypeAndMethods);
-			}
-
-			foreach (PropertyInfo baseProperty in interfaceType.GetPropertiesRecursive(RelevantFlagsForBinding)) {
-				BindProperty(typeBuilder, baseProperty, handlerField, options.SealTypeAndMethods);
-			}
-
-			foreach (EventInfo baseEvent in interfaceType.GetEventsRecursive(RelevantFlagsForBinding)) {
-				BindEvent(typeBuilder, baseEvent, handlerField, options.SealTypeAndMethods);
-			}
-
-			return typeBuilder.CreateType()!;
-		}
 
 		private static void ImplementDispose(TypeBuilder typeBuilder, FieldInfo handlerField, bool checkInstance) => OverrideMethod(
 			typeBuilder,

@@ -32,6 +32,9 @@ namespace Implement.Net.Reflection {
 		internal static readonly Type Boolean = typeof(bool);
 
 		// ReSharper disable once InconsistentNaming
+		internal static readonly Type IAsyncDisposable = typeof(IAsyncDisposable);
+
+		// ReSharper disable once InconsistentNaming
 		internal static readonly Type IDisposable = typeof(IDisposable);
 
 		// ReSharper disable once InconsistentNaming
