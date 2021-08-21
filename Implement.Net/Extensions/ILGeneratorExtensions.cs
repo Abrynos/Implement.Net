@@ -25,6 +25,7 @@
 // USA
 
 using System;
+using System.Reflection;
 using System.Reflection.Emit;
 using Implement.Net.Reflection;
 
@@ -35,6 +36,12 @@ namespace Implement.Net.Extensions {
 			generator.Emit(OpCodes.Ldtoken, type);
 			generator.EmitCall(OpCodes.Call, Methods.Type.GetTypeFromHandle, null);
 		}
+
+		internal static void Call(this ILGenerator generator, MethodInfo method) => generator.EmitCall(OpCodes.Call, method);
+
+		internal static void CallVirt(this ILGenerator generator, MethodInfo method) => generator.EmitCall(OpCodes.Callvirt, method);
+
+		private static void EmitCall(this ILGenerator generator, OpCode opCode, MethodInfo method) => generator.EmitCall(opCode, method, null);
 
 		internal static void EmitThrowIfLocalIsFalse(this ILGenerator generator, LocalBuilder variable, Type exceptionType) {
 			if (variable.LocalType != typeof(bool)) {

@@ -180,6 +180,9 @@ namespace Implement.Net {
 			if (isHandlerDisposable || interfaceType.IsAssignableTo(Types.IDisposable) || options.EnforceDisposable) {
 				typeBuilder.AddInterfaceImplementation(Types.IDisposable);
 				ImplementDispose(typeBuilder, handlerField, !isHandlerDisposable);
+
+				// Make sure that the handler is disposed in case the consumer forgets to do it
+				CreateDestructor(typeBuilder);
 			}
 
 			if (options.ObjectMethodBehaviour != GenerationOptions.EObjectMethodBehaviour.Ignore) {
@@ -237,7 +240,7 @@ namespace Implement.Net {
 				generator.Emit(OpCodes.Ldstr, baseEvent.Name);
 				generator.Emit(OpCodes.Ldarg_1);
 
-				generator.EmitCall(OpCodes.Callvirt, handlingMethod, null);
+				generator.CallVirt(handlingMethod);
 				generator.Emit(OpCodes.Stloc, successLocal);
 
 				// if (!loc_0) throw new NotImplementedException();
@@ -275,7 +278,7 @@ namespace Implement.Net {
 						generator.Emit(OpCodes.Box, parameter.ParameterType);
 					}
 
-					generator.EmitCall(OpCodes.Callvirt, Methods.ObjectList.Add, null);
+					generator.Call(Methods.ObjectList.Add);
 				}
 
 				// loc_1 = this.[handlerField].TryInvokeMethod(MethodInfo.GetMethodFromHandle([baseMethod]), loc_2.ToArray(), out loc_0);
@@ -286,17 +289,17 @@ namespace Implement.Net {
 
 				if (baseMethod.DeclaringType!.IsGenericType) {
 					generator.Emit(OpCodes.Ldtoken, baseMethod.ReflectedType!);
-					generator.EmitCall(OpCodes.Call, Methods.MethodBase.GetMethodFromHandleWithDeclaringType, null);
+					generator.Call(Methods.MethodBase.GetMethodFromHandleWithDeclaringType);
 				} else {
-					generator.EmitCall(OpCodes.Call, Methods.MethodBase.GetMethodFromHandle, null);
+					generator.Call(Methods.MethodBase.GetMethodFromHandle);
 				}
 
 				generator.Emit(OpCodes.Ldloc, parameterLocal);
-				generator.EmitCall(OpCodes.Callvirt, Methods.ObjectList.ToArray, null);
+				generator.Call(Methods.ObjectList.ToArray);
 
 				generator.Emit(OpCodes.Ldloca_S, resultLocal);
 
-				generator.EmitCall(OpCodes.Callvirt, Methods.IDynamicHandler.TryInvokeMethod, null);
+				generator.CallVirt(Methods.IDynamicHandler.TryInvokeMethod);
 
 				generator.Emit(OpCodes.Stloc, successLocal);
 
@@ -349,7 +352,7 @@ namespace Implement.Net {
 				generator.Emit(OpCodes.Ldstr, property.Name);
 				generator.Emit(OpCodes.Ldloca_S, resultLocal);
 
-				generator.EmitCall(OpCodes.Callvirt, Methods.IDynamicHandler.TryGetProperty, null);
+				generator.CallVirt(Methods.IDynamicHandler.TryGetProperty);
 				generator.Emit(OpCodes.Stloc, successLocal);
 
 				// if (!loc_1) throw new NotImplementedException();
@@ -384,7 +387,7 @@ namespace Implement.Net {
 					generator.Emit(OpCodes.Box, property.PropertyType);
 				}
 
-				generator.EmitCall(OpCodes.Callvirt, Methods.IDynamicHandler.TrySetProperty, null);
+				generator.CallVirt(Methods.IDynamicHandler.TrySetProperty);
 				generator.Emit(OpCodes.Stloc, successLocal);
 
 				// if (!loc_0) throw new NotImplementedException();
@@ -424,6 +427,19 @@ namespace Implement.Net {
 			generator.Emit(OpCodes.Ldarg_0);
 			generator.Emit(OpCodes.Ldarg, fieldParameter.Position);
 			generator.Emit(OpCodes.Stfld, handlerField);
+
+			// return;
+			generator.Emit(OpCodes.Ret);
+		}
+
+		private static void CreateDestructor(TypeBuilder typeBuilder) {
+			MethodBuilder destructorBuilder = typeBuilder.DefineMethod("Finalize", MethodAttributes.Family | MethodAttributes.Virtual | MethodAttributes.HideBySig, CallingConventions.Standard, Types.Void, Type.EmptyTypes);
+
+			ILGenerator generator = destructorBuilder.GetILGenerator();
+
+			// this.Dispose();
+			generator.Emit(OpCodes.Ldarg_0);
+			generator.CallVirt(Methods.IDisposable.Dispose);
 
 			// return;
 			generator.Emit(OpCodes.Ret);
@@ -469,7 +485,7 @@ namespace Implement.Net {
 
 			// if (![local].GetType().IsAssignableTo([type]))
 			generator.Emit(OpCodes.Ldloc, local);
-			generator.Emit(OpCodes.Callvirt, Methods.Object.GetType);
+			generator.Call(Methods.Object.GetType);
 			generator.EmitLoadType(type);
 			generator.Emit(OpCodes.Call, Methods.Type.IsAssignableTo);
 			generator.Emit(OpCodes.Brtrue, isNull);
@@ -493,7 +509,7 @@ namespace Implement.Net {
 					generator.Emit(OpCodes.Ldarg, parameter.Position + 1); // ParameterInfo starts indexing with 0; ILCode argument 0 is the object instance on which the method is called
 				}
 
-				generator.EmitCall(OpCodes.Callvirt, baseMethod, null);
+				generator.CallVirt(baseMethod);
 
 				generator.Emit(OpCodes.Ret);
 			},
@@ -526,11 +542,15 @@ namespace Implement.Net {
 				// this.[handlerField].Dispose();
 				generator.Emit(OpCodes.Ldarg_0);
 				generator.Emit(OpCodes.Ldfld, handlerField);
-				generator.EmitCall(OpCodes.Callvirt, Methods.IDisposable.Dispose, null);
+				generator.CallVirt(Methods.IDisposable.Dispose);
 
 				// }
 				// }
 				generator.MarkLabel(doNothingLabel);
+				
+				// GC.SuppressFinalize(this);
+				generator.Emit(OpCodes.Ldarg_0);
+				generator.Call(Methods.GC.SuppressFinalize);
 
 				// return;
 				generator.Emit(OpCodes.Ret);

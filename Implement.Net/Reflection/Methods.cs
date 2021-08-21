@@ -33,7 +33,11 @@ using Implement.Net.Extensions;
 namespace Implement.Net.Reflection {
 	internal static class Methods {
 		internal static class Activator {
-			internal static readonly MethodInfo CreateInstance = ((Expression<Func<object, object?>>) (obj => System.Activator.CreateInstance(obj.GetType()))).GetMethodInfo();
+			internal static readonly MethodInfo CreateInstance = ((Expression<Action<object>>) (obj => System.Activator.CreateInstance(typeof(object)))).GetMethodInfo();
+		}
+
+		internal static class GC {
+			internal static readonly MethodInfo SuppressFinalize = ((Expression<Action>) (() => System.GC.SuppressFinalize(new object()))).GetMethodInfo();
 		}
 
 		// ReSharper disable once InconsistentNaming
@@ -53,7 +57,10 @@ namespace Implement.Net.Reflection {
 
 			internal static readonly MethodInfo TrySetProperty = ((Expression<Func<Net.IDynamicHandler, bool>>) (handler => handler.TrySetProperty(typeof(object), "", new object()))).GetMethodInfo();
 
+			// We need a dummy result because an expression tree may not contain discards
+#pragma warning disable IDE0052
 			private static object? DummyResult;
+#pragma warning restore IDE0052
 		}
 
 		internal static class MethodBase {
@@ -69,13 +76,13 @@ namespace Implement.Net.Reflection {
 		internal static class ObjectList {
 			internal static readonly MethodInfo Add = ((Expression<Action<List<object?>>>) (ol => ol.Add(null))).GetMethodInfo();
 
-			internal static readonly MethodInfo ToArray = ((Expression<Func<List<object?>, object?[]>>) (l => l.ToArray())).GetMethodInfo();
+			internal static readonly MethodInfo ToArray = ((Expression<Action<List<object?>>>) (l => l.ToArray())).GetMethodInfo();
 		}
 
 		internal static class Type {
 			internal static readonly MethodInfo GetTypeFromHandle = ((Expression<Func<RuntimeTypeHandle, System.Type>>) (rth => System.Type.GetTypeFromHandle(rth))).GetMethodInfo();
 
-			internal static readonly MethodInfo IsAssignableTo = ((Expression<Func<System.Type, bool>>) (t => t.IsAssignableTo(typeof(object)))).GetMethodInfo();
+			internal static readonly MethodInfo IsAssignableTo = ((Expression<Action<System.Type>>) (t => t.IsAssignableTo(typeof(object)))).GetMethodInfo();
 		}
 	}
 }
