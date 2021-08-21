@@ -65,6 +65,9 @@ namespace Implement.Net.Tests {
 		}
 
 		[Fact]
+		public void ImplementIAsyncDisposeDirectly() => Assert.Throws<ArgumentException>(() => CreateType<IAsyncDisposable>());
+
+		[Fact]
 		public void ImplementIDisposeDirectly() => Assert.Throws<ArgumentException>(() => CreateType<IDisposable>());
 
 		[Fact]
