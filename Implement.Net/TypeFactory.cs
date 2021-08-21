@@ -547,7 +547,7 @@ namespace Implement.Net {
 				// }
 				// }
 				generator.MarkLabel(doNothingLabel);
-				
+
 				// GC.SuppressFinalize(this);
 				generator.Emit(OpCodes.Ldarg_0);
 				generator.Call(Methods.GC.SuppressFinalize);
