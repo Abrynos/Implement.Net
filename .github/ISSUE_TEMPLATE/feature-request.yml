@@ -6,7 +6,7 @@ body:
     id: checklist
     attributes:
       label: Checklist
-      description: Ensure that our bug report form is appropriate for you.
+      description: Ensure that our feature request form is appropriate for you.
       options:
         - label: I read and understood the **[Contributing Guidelines](https://github.com/Abrynos/Implement.Net/blob/master/.github/CONTRIBUTING.md)**.
           required: true
