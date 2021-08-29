@@ -50,12 +50,6 @@ namespace Implement.Net.Tests {
 		}
 
 		[Fact]
-		public void GenericInterface() => Assert.Throws<ArgumentException>(() => TypeFactory.CreateType(typeof(IGenericInterface<>)));
-
-		[Fact]
-		public void GenericMethodInInterface() => Assert.Throws<ArgumentException>(() => CreateType<IGenericMethod>());
-
-		[Fact]
 		public void IgnoreCache() {
 			Options.IgnoreCache = true;
 
@@ -65,6 +59,12 @@ namespace Implement.Net.Tests {
 		}
 
 		[Fact]
+		public void ImplementGenericInterface() => Assert.Throws<ArgumentException>(() => TypeFactory.CreateType(typeof(IGenericInterface<>)));
+
+		[Fact]
+		public void ImplementGenericMethodInInterface() => Assert.Throws<ArgumentException>(() => CreateType<IGenericMethod>());
+
+		[Fact]
 		public void ImplementIAsyncDisposeDirectly() => Assert.Throws<ArgumentException>(() => CreateType<IAsyncDisposable>());
 
 		[Fact]
@@ -72,6 +72,33 @@ namespace Implement.Net.Tests {
 
 		[Fact]
 		public void ImplementNonInterfaceType() => Assert.Throws<ArgumentException>(() => TypeFactory.CreateType<AbstractTest>());
+
+		[Fact]
+		public void ImplementNonPublicInterface() => Assert.Throws<ArgumentException>(() => TypeFactory.CreateType<IInternalEmptyInterface>());
+
+		// We cannot trust everyone to have nullable types enabled - Make sure we don't run into any problems when receiving null values
+#pragma warning disable 8625
+		[Fact]
+		public void TryCreateNullType() => Assert.Throws<ArgumentNullException>(() => TypeFactory.TryCreateType(null, out _));
+#pragma warning restore 8625
+
+		[Fact]
+		public void TryImplementGenericInterface() => Assert.False(TypeFactory.TryCreateType(typeof(IGenericInterface<>), out _));
+
+		[Fact]
+		public void TryImplementGenericMethodInInterface() => Assert.False(TypeFactory.TryCreateType<IGenericMethod>(out _));
+
+		[Fact]
+		public void TryImplementIAsyncDisposeDirectly() => Assert.False(TypeFactory.TryCreateType<IAsyncDisposable>(out _));
+
+		[Fact]
+		public void TryImplementIDisposeDirectly() => Assert.False(TypeFactory.TryCreateType<IDisposable>(out _));
+
+		[Fact]
+		public void TryImplementNonInterfaceType() => Assert.False(TypeFactory.TryCreateType<AbstractTest>(out _));
+
+		[Fact]
+		public void TryImplementNonPublicInterface() => Assert.False(TypeFactory.TryCreateType<IInternalEmptyInterface>(out _));
 
 		[Fact]
 		public void UseCache() {
