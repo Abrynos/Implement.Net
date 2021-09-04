@@ -32,7 +32,7 @@ namespace Implement.Net.Tests.Utilities {
 
 		public override bool Equals(object? obj) => ReferenceEquals(this, obj) || obj is Person other && Equals(other);
 
-		public override int GetHashCode() => HashCode.Combine(Guid);
+		public override int GetHashCode() => Guid.GetHashCode();
 
 		private bool Equals(Person other) => Guid == other.Guid;
 	}

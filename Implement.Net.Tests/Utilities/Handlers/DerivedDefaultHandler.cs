@@ -24,24 +24,6 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
 // USA
 
-namespace Implement.Net.Tests.Utilities.Interfaces {
-	public interface IPropertyInterface {
-		Person? GetOnlyObject { get; }
-
-		int GetOnlyValueType { get; }
-
-#pragma warning disable CA1720
-#pragma warning disable CA1716
-		Person? Object { get; set; }
-#pragma warning restore CA1716
-#pragma warning restore CA1720
-
-		int ValueType { get; set; }
-
-#pragma warning disable CA1044
-		Person? SetOnlyObject { set; }
-
-		int SetOnlyValueType { set; }
-#pragma warning restore CA1044
-	}
+namespace Implement.Net.Tests.Utilities.Handlers {
+	internal sealed class DerivedDefaultHandler : DefaultHandler { }
 }

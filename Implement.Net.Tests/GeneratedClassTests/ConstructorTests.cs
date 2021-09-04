@@ -94,7 +94,5 @@ namespace Implement.Net.Tests.GeneratedClassTests {
 
 			return constructor.Invoke(new[] { handler }) as TInterface;
 		}
-
-		private sealed class DerivedDefaultHandler : DefaultHandler { }
 	}
 }

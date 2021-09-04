@@ -24,24 +24,47 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
 // USA
 
-namespace Implement.Net.Tests.Utilities.Interfaces {
-	public interface IPropertyInterface {
-		Person? GetOnlyObject { get; }
+using System;
 
-		int GetOnlyValueType { get; }
+namespace Implement.Net.Tests.Utilities.Handlers {
+	internal sealed class ObjectMethodHandler : DefaultHandler {
+		internal bool EqualsCalled { get; private set; }
+		internal bool EqualsResult { get; set; }
 
-#pragma warning disable CA1720
-#pragma warning disable CA1716
-		Person? Object { get; set; }
-#pragma warning restore CA1716
-#pragma warning restore CA1720
+		internal bool GetHashCodeCalled { get; private set; }
+		internal int GetHashCodeResult { get; set; } = 42;
+		internal object? LastEqualsParameter { get; private set; }
 
-		int ValueType { get; set; }
+		internal bool ToStringCalled { get; private set; }
+		internal string? ToStringResult { get; set; } = string.Empty;
 
-#pragma warning disable CA1044
-		Person? SetOnlyObject { set; }
+		private readonly Action FinalizeAction;
 
-		int SetOnlyValueType { set; }
-#pragma warning restore CA1044
+		internal ObjectMethodHandler() : this(() => { }) { }
+
+		internal ObjectMethodHandler(Action finalizeAction) => FinalizeAction = finalizeAction;
+
+		~ObjectMethodHandler() => FinalizeAction.Invoke();
+
+		public override bool Equals(object? obj) {
+			EqualsCalled = true;
+			LastEqualsParameter = obj;
+
+			return EqualsResult;
+		}
+
+		public override int GetHashCode() {
+			// ReSharper disable once NonReadonlyMemberInGetHashCode
+			GetHashCodeCalled = true;
+
+			// ReSharper disable once NonReadonlyMemberInGetHashCode
+			return GetHashCodeResult;
+		}
+
+		public override string? ToString() {
+			ToStringCalled = true;
+
+			return ToStringResult;
+		}
 	}
 }

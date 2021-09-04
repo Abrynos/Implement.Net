@@ -26,6 +26,7 @@
 
 using System;
 using System.Reflection;
+using Implement.Net.Tests.Utilities;
 using Implement.Net.Tests.Utilities.Handlers;
 using Implement.Net.Tests.Utilities.Interfaces;
 using Xunit;
@@ -169,41 +170,6 @@ namespace Implement.Net.Tests.GeneratedClassTests {
 			Type type = CreateType<TInterface>(Options);
 
 			return (type, CreateInstance<TInterface>(type, handler));
-		}
-
-		private sealed class ObjectMethodHandler : DefaultHandler {
-			internal bool EqualsCalled { get; private set; }
-
-			internal bool GetHashCodeCalled { get; private set; }
-
-			internal bool ToStringCalled { get; private set; }
-
-			private readonly Action FinalizeAction;
-
-			internal ObjectMethodHandler() : this(() => { }) { }
-
-			internal ObjectMethodHandler(Action finalizeAction) => FinalizeAction = finalizeAction;
-
-			~ObjectMethodHandler() => FinalizeAction.Invoke();
-
-			public override bool Equals(object? obj) {
-				EqualsCalled = true;
-
-				return false;
-			}
-
-			public override int GetHashCode() {
-				// ReSharper disable once NonReadonlyMemberInGetHashCode
-				GetHashCodeCalled = true;
-
-				return 42;
-			}
-
-			public override string ToString() {
-				ToStringCalled = true;
-
-				return string.Empty;
-			}
 		}
 	}
 }
