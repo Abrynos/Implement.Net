@@ -55,6 +55,28 @@ namespace Implement.Net.Tests.GeneratedClassTests {
 		}
 
 		[Fact]
+		public void EqualsForwardedParameterMatches() {
+			ObjectMethodHandler handler = new ();
+			IEmptyInterface instance = CreateInstanceWithObjectMethods<IEmptyInterface>(GenerationOptions.EObjectMethodBehaviour.Forward, handler);
+
+			foreach (object? obj in new[] { null, new object(), new Person() }) {
+				_ = instance.Equals(obj);
+				Assert.Equal(obj, handler.LastEqualsParameter);
+			}
+		}
+
+		[Fact]
+		public void EqualsForwardedResultMatches() {
+			ObjectMethodHandler handler = new ();
+			IEmptyInterface instance = CreateInstanceWithObjectMethods<IEmptyInterface>(GenerationOptions.EObjectMethodBehaviour.Forward, handler);
+
+			foreach (bool resultValue in new[] { true, false }) {
+				handler.EqualsResult = resultValue;
+				Assert.Equal(resultValue, instance!.Equals(null));
+			}
+		}
+
+		[Fact]
 		public void EqualsIgnored() {
 			bool called = false;
 			CallbackHandler.MethodInvoker = MethodInvoker(true, () => called = true);
@@ -105,12 +127,23 @@ namespace Implement.Net.Tests.GeneratedClassTests {
 		}
 
 		[Fact]
-		public void GetHashcodeForwarded() {
+		public void GetHashCodeForwarded() {
 			ObjectMethodHandler handler = new ();
 			IEmptyInterface instance = CreateInstanceWithObjectMethods<IEmptyInterface>(GenerationOptions.EObjectMethodBehaviour.Forward, handler);
 
 			_ = instance.GetHashCode();
 			Assert.True(handler.GetHashCodeCalled);
+		}
+
+		[Fact]
+		public void GetHashCodeForwardedResultMatches() {
+			ObjectMethodHandler handler = new ();
+			IEmptyInterface instance = CreateInstanceWithObjectMethods<IEmptyInterface>(GenerationOptions.EObjectMethodBehaviour.Forward, handler);
+
+			foreach (int resultValue in new[] { 42, -42, 0 }) {
+				handler.GetHashCodeResult = resultValue;
+				Assert.Equal(resultValue, instance.GetHashCode());
+			}
 		}
 
 		[Fact]
@@ -151,6 +184,17 @@ namespace Implement.Net.Tests.GeneratedClassTests {
 
 			_ = instance.ToString();
 			Assert.True(handler.ToStringCalled);
+		}
+
+		[Fact]
+		public void ToStringForwardedResultMatches() {
+			ObjectMethodHandler handler = new ();
+			IEmptyInterface instance = CreateInstanceWithObjectMethods<IEmptyInterface>(GenerationOptions.EObjectMethodBehaviour.Forward, handler);
+
+			foreach (string? resultValue in new[] { string.Empty, "42", " \t\n\r\0test42", $"{nameof(instance)}", null }) {
+				handler.ToStringResult = resultValue;
+				Assert.Equal(resultValue, instance.ToString());
+			}
 		}
 
 		[Fact]
