@@ -27,7 +27,7 @@ jobs:
           ref: ${{ env.RELEASE_TAG }}
 
       - name: Set .NET core up
-        uses: actions/setup-dotnet@v1.8.1
+        uses: actions/setup-dotnet@v1.8.2
         with:
           dotnet-version: 5.0.x
 
