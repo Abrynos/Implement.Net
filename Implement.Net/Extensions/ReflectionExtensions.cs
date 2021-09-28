@@ -32,18 +32,6 @@ using System.Reflection;
 
 namespace Implement.Net.Extensions {
 	internal static class ReflectionExtensions {
-		internal static bool CanAdd(this EventInfo @event) {
-			MethodInfo? addMethod = @event.GetAddMethod(true);
-
-			return addMethod != null;
-		}
-
-		internal static bool CanRemove(this EventInfo @event) {
-			MethodInfo? removeMethod = @event.GetRemoveMethod(true);
-
-			return removeMethod != null;
-		}
-
 		internal static IEnumerable<EventInfo> GetEventsRecursive(this Type type, BindingFlags bindingAttr) => GetMembersRecursive(
 			type,
 			bindingAttr,

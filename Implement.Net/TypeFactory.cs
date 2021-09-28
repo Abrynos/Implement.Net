@@ -211,11 +211,11 @@ namespace Implement.Net {
 		private static void BindEvent(TypeBuilder typeBuilder, EventInfo baseEvent, FieldInfo handlerField, bool markFinal) {
 			EventBuilder eventBuilder = typeBuilder.DefineEvent(baseEvent.Name, baseEvent.Attributes, baseEvent.EventHandlerType!);
 
-			if (baseEvent.CanAdd()) {
+			if (baseEvent.GetAddMethod(true) != null) {
 				eventBuilder.SetAddOnMethod(BindEventModificationMethod(typeBuilder, baseEvent, baseEvent.GetAddMethod(true)!, handlerField, Methods.IDynamicHandler.TryAddEventHandler, markFinal));
 			}
 
-			if (baseEvent.CanRemove()) {
+			if (baseEvent.GetRemoveMethod(true) != null) {
 				eventBuilder.SetRemoveOnMethod(BindEventModificationMethod(typeBuilder, baseEvent, baseEvent.GetRemoveMethod(true)!, handlerField, Methods.IDynamicHandler.TryRemoveEventHandler, markFinal));
 			}
 
