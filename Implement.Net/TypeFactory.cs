@@ -29,6 +29,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Threading.Tasks;
 using Implement.Net.Extensions;
 using Implement.Net.Reflection;
 using JetBrains.Annotations;
@@ -176,10 +177,15 @@ namespace Implement.Net {
 			CreateConstructor(typeBuilder, handlerField);
 
 			bool isHandlerDisposable = options.HandlerType.IsAssignableTo(Types.IDisposable);
+			bool isHandlerAsyncDisposable = options.HandlerType.IsAssignableTo(Types.IAsyncDisposable);
+			bool isInterfaceDisposable = interfaceType.IsAssignableTo(Types.IDisposable) || interfaceType.IsAssignableTo(Types.IAsyncDisposable);
 
-			if (isHandlerDisposable || interfaceType.IsAssignableTo(Types.IDisposable) || options.EnforceDisposable) {
+			if (isHandlerDisposable || isHandlerAsyncDisposable || isInterfaceDisposable || options.EnforceDisposable) {
 				typeBuilder.AddInterfaceImplementation(Types.IDisposable);
-				ImplementDispose(typeBuilder, handlerField, !isHandlerDisposable);
+				typeBuilder.AddInterfaceImplementation(Types.IAsyncDisposable);
+
+				ImplementDispose(typeBuilder, handlerField, !isHandlerDisposable, isHandlerAsyncDisposable);
+				ImplementDisposeAsync(typeBuilder, handlerField, !isHandlerAsyncDisposable, isHandlerDisposable);
 
 				// Make sure that the handler is disposed in case the consumer forgets to do it
 				CreateDestructor(typeBuilder);
@@ -191,6 +197,7 @@ namespace Implement.Net {
 
 			foreach (MethodInfo baseMethod in interfaceType.GetMethodsRecursive(RelevantFlagsForBinding)
 														   .Where(method => method.DeclaringType != Types.IDisposable)
+														   .Where(method => method.DeclaringType != Types.IAsyncDisposable)
 														   .Where(method => method.IsVirtual)
 														   .Where(method => !method.IsSpecialName)
 														   .Where(method => !method.IsFinal)) {
@@ -516,11 +523,34 @@ namespace Implement.Net {
 			markFinal
 		);
 
-		private static void ImplementDispose(TypeBuilder typeBuilder, FieldInfo handlerField, bool checkInstance) => OverrideMethod(
+// Following implementations are possible based on the values of the last two parameters:
+// ======================== (false, _) ========================
+//	this.[handlerField]?.Dispose();
+//	GC.SuppressFinalize(this);
+// ======================= (true, true) =======================
+//	if(this.[handlerField] != null) {
+//		if(this.[handlerField] is IDisposable) {
+//			this.[handlerField].Dispose();
+//		} else {
+//			this.[handlerField].DisposeAsync().AsTask().GetAwaiter().GetResult();
+//		}
+//	}
+//	GC.SuppressFinalize(this);
+// ====================== (true, false) =======================
+//	if(this.[handlerField] != null) {
+//		if(this.[handlerField] is IDisposable) {
+//			this.[handlerField].Dispose();
+//		} else if(this.[handlerField] is IAsyncDisposable) {
+//			this.[handlerField].DisposeAsync().AsTask().GetAwaiter().GetResult();
+//		}
+//	}
+//	GC.SuppressFinalize(this);
+		private static void ImplementDispose(TypeBuilder typeBuilder, FieldInfo handlerField, bool checkInstance, bool isAlwaysAsyncDisposable) => OverrideMethod(
 			typeBuilder,
 			Methods.IDisposable.Dispose,
 			generator => {
 				Label doNothingLabel = generator.DefineLabel();
+				Label disposeAsyncLabel = generator.DefineLabel();
 
 				// if (this.[handlerField] != null) {
 				generator.Emit(OpCodes.Ldarg_0);
@@ -536,13 +566,51 @@ namespace Implement.Net {
 					generator.Emit(OpCodes.Isinst, Types.IDisposable);
 					generator.Emit(OpCodes.Ldnull);
 					generator.Emit(OpCodes.Cgt_Un);
-					generator.Emit(OpCodes.Brfalse_S, doNothingLabel);
+					generator.Emit(OpCodes.Brfalse_S, disposeAsyncLabel);
 				}
 
 				// this.[handlerField].Dispose();
 				generator.Emit(OpCodes.Ldarg_0);
 				generator.Emit(OpCodes.Ldfld, handlerField);
 				generator.CallVirt(Methods.IDisposable.Dispose);
+
+				// if we were able to dispose sync, we can skip forward to GC.SuppressFinalize(this); otherwise we still need to try disposing asynchronous
+				generator.Emit(OpCodes.Br_S, doNothingLabel);
+
+				if (checkInstance) {
+					// we weren't able to dispose the handler synchronously. Try disposing it async and wait for that to finish
+					generator.MarkLabel(disposeAsyncLabel);
+
+					// if we don't know whether the handler is IAsyncDisposable for sure, we need to check the instance once again
+					if (!isAlwaysAsyncDisposable) {
+						// if (this.[handlerField] is IAsyncDisposable) {
+						generator.Emit(OpCodes.Ldarg_0);
+						generator.Emit(OpCodes.Ldfld, handlerField);
+						generator.Emit(OpCodes.Isinst, Types.IAsyncDisposable);
+						generator.Emit(OpCodes.Ldnull);
+						generator.Emit(OpCodes.Cgt_Un);
+						generator.Emit(OpCodes.Brfalse_S, doNothingLabel);
+					}
+
+					// we can't get the awaiter of the ValueTask directly, because that one does not guarantee the ValueTask finished already
+					// we need locals, because we need the address of the structs for method calls on them
+					LocalBuilder valueTaskLocal = generator.DeclareLocal(Types.ValueTask);
+					LocalBuilder awaiterLocal = generator.DeclareLocal(Types.TaskAwaiter);
+
+					// this.[handlerField].DisposeAsync().AsTask().GetAwaiter().GetResult();
+					generator.Emit(OpCodes.Ldarg_0);
+					generator.Emit(OpCodes.Ldfld, handlerField);
+					generator.CallVirt(Methods.IAsyncDisposable.DisposeAsync);
+					generator.Emit(OpCodes.Stloc, valueTaskLocal);
+					generator.Emit(OpCodes.Ldloca_S, valueTaskLocal);
+					generator.Call(Methods.ValueTask.AsTask);
+					generator.Call(Methods.Task.GetAwaiter);
+					generator.Emit(OpCodes.Stloc, awaiterLocal);
+					generator.Emit(OpCodes.Ldloca_S, awaiterLocal);
+					generator.Call(Methods.TaskAwaiter.GetResult);
+
+					// }
+				}
 
 				// }
 				// }
@@ -554,7 +622,122 @@ namespace Implement.Net {
 
 				// return;
 				generator.Emit(OpCodes.Ret);
-			}
+			},
+			true
+		);
+
+// Following implementations are possible based on the values of the last two parameters:
+// ======================== (false, _) ========================
+// 	ValueTask result = this.[handlerField]?.DisposeAsync();
+// 	GC.SuppressFinalize(this);
+// 	return result;
+// ======================= (true, true) =======================
+// 	ValueTask result;
+// 	if(this.[handlerField] != null) {
+//		if(this.[handlerField] is IAsyncDisposable) {
+//			result = this.[handlerField].DisposeAsync();
+// 		} else {
+// 			this.[handlerField].Dispose();
+// 			result = ValueTask.CompletedTask
+// 		}
+// 	}
+// 	GC.SuppressFinalize(this);
+// 	return result;
+// ====================== (true, false) =======================
+// 	ValueTask result;
+// 	if(this.[handlerField] != null) {
+// 		if(this.[handlerField] is IAsyncDisposable) {
+// 			result = this.[handlerField].DisposeAsync();
+// 		} else {
+// 			if(this.[handlerField] is IDisposable) {
+// 				this.[handlerField].Dispose();
+// 			}
+// 			result = ValueTask.CompletedTask;
+// 		}
+// 	}
+// 	GC.SuppressFinalize(this);
+		private static void ImplementDisposeAsync(TypeBuilder typeBuilder, FieldInfo handlerField, bool checkInstance, bool isAlwaysSyncDisposable) => OverrideMethod(
+			typeBuilder,
+			Methods.IAsyncDisposable.DisposeAsync,
+			generator => {
+				Label doNothingLabel = generator.DefineLabel();
+				Label assignCompletedTaskLabel = generator.DefineLabel();
+				Label disposeSyncLabel = generator.DefineLabel();
+
+				// ValueTask loc_0;
+				LocalBuilder resultLocal = generator.DeclareLocal(typeof(ValueTask));
+
+				// if (this.[handlerField] != null) {
+				generator.Emit(OpCodes.Ldarg_0);
+				generator.Emit(OpCodes.Ldfld, handlerField);
+				generator.Emit(OpCodes.Ldnull);
+				generator.Emit(OpCodes.Ceq);
+				generator.Emit(OpCodes.Brtrue, assignCompletedTaskLabel);
+
+				if (checkInstance) {
+					// if (this.[handlerField] is IAsyncDisposable) {
+					generator.Emit(OpCodes.Ldarg_0);
+					generator.Emit(OpCodes.Ldfld, handlerField);
+					generator.Emit(OpCodes.Isinst, Types.IAsyncDisposable);
+					generator.Emit(OpCodes.Ldnull);
+					generator.Emit(OpCodes.Cgt_Un);
+					generator.Emit(OpCodes.Brfalse_S, disposeSyncLabel);
+				}
+
+				// loc_0 = this.[handlerField].DisposeAsync();
+				generator.Emit(OpCodes.Ldarg_0);
+				generator.Emit(OpCodes.Ldfld, handlerField);
+				generator.CallVirt(Methods.IAsyncDisposable.DisposeAsync);
+				generator.Emit(OpCodes.Stloc, resultLocal);
+
+				// if we were able to dispose async, we can skip forward to GC.SuppressFinalize(this); otherwise we still need to assign a value to the result local (and optionally dispose synchronous)
+				generator.Emit(OpCodes.Br_S, doNothingLabel);
+
+				if (checkInstance) {
+					// } else { // this.[handlerField] is not IAsyncDisposable
+
+					// if we don't know whether the handler is IDisposable for sure, we need to check the instance once again
+					if (!isAlwaysSyncDisposable) {
+						// if (this.[handlerField] is IDisposable) {
+						generator.Emit(OpCodes.Ldarg_0);
+						generator.Emit(OpCodes.Ldfld, handlerField);
+						generator.Emit(OpCodes.Isinst, Types.IDisposable);
+						generator.Emit(OpCodes.Ldnull);
+						generator.Emit(OpCodes.Cgt_Un);
+						generator.Emit(OpCodes.Brfalse_S, doNothingLabel);
+					}
+
+					generator.MarkLabel(disposeSyncLabel);
+
+					// this.[handlerField].Dispose();
+					generator.Emit(OpCodes.Ldarg_0);
+					generator.Emit(OpCodes.Ldfld, handlerField);
+					generator.CallVirt(Methods.IDisposable.Dispose);
+
+					// }
+					// }
+				}
+
+				// } else { // this.[handlerField] == null || (this.[handlerField] != null && this.[handlerField] is not IAsyncDisposable)
+				generator.MarkLabel(assignCompletedTaskLabel);
+
+				// loc_0 = ValueTask.CompletedTask;
+				generator.Call(Methods.ValueTask.GetCompletedTask);
+				generator.Emit(OpCodes.Stloc, resultLocal);
+
+				// }
+
+				generator.MarkLabel(doNothingLabel);
+
+				// GC.SuppressFinalize(this);
+				generator.Emit(OpCodes.Ldarg_0);
+				generator.Call(Methods.GC.SuppressFinalize);
+
+				// return loc_0;
+				generator.Emit(OpCodes.Ldloc, resultLocal);
+				generator.Emit(OpCodes.Ret);
+			},
+			true
 		);
 
 		private static void ImplementObjectMethods(TypeBuilder typeBuilder, FieldInfo handlerField, ImmutableGenerationOptions options) {

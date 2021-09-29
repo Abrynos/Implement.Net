@@ -41,6 +41,11 @@ namespace Implement.Net.Reflection {
 		}
 
 		// ReSharper disable once InconsistentNaming
+		internal static class IAsyncDisposable {
+			internal static readonly MethodInfo DisposeAsync = ((Expression<Func<System.IAsyncDisposable, System.Threading.Tasks.ValueTask>>) (asyncDisposable => asyncDisposable.DisposeAsync())).GetMethodInfo();
+		}
+
+		// ReSharper disable once InconsistentNaming
 		internal static class IDisposable {
 			internal static readonly MethodInfo Dispose = ((Expression<Action<System.IDisposable>>) (disposable => disposable.Dispose())).GetMethodInfo();
 		}
@@ -79,10 +84,24 @@ namespace Implement.Net.Reflection {
 			internal static readonly MethodInfo ToArray = ((Expression<Action<List<object?>>>) (l => l.ToArray())).GetMethodInfo();
 		}
 
+		internal static class Task {
+			internal static readonly MethodInfo GetAwaiter = ((Expression<Func<System.Threading.Tasks.Task, System.Runtime.CompilerServices.TaskAwaiter>>) (valueTask => valueTask.GetAwaiter())).GetMethodInfo();
+		}
+
+		internal static class TaskAwaiter {
+			internal static readonly MethodInfo GetResult = ((Expression<Action<System.Runtime.CompilerServices.TaskAwaiter>>) (taskAwaiter => taskAwaiter.GetResult())).GetMethodInfo();
+		}
+
 		internal static class Type {
 			internal static readonly MethodInfo GetTypeFromHandle = ((Expression<Func<RuntimeTypeHandle, System.Type>>) (rth => System.Type.GetTypeFromHandle(rth))).GetMethodInfo();
 
 			internal static readonly MethodInfo IsAssignableTo = ((Expression<Action<System.Type>>) (t => t.IsAssignableTo(typeof(object)))).GetMethodInfo();
+		}
+
+		internal static class ValueTask {
+			internal static readonly MethodInfo AsTask = ((Expression<Func<System.Threading.Tasks.ValueTask, System.Threading.Tasks.Task>>) (valueTask => valueTask.AsTask())).GetMethodInfo();
+
+			internal static readonly MethodInfo GetCompletedTask = Properties.ValueTask.CompletedTask.GetGetMethod(true) ?? throw new InvalidOperationException();
 		}
 	}
 }

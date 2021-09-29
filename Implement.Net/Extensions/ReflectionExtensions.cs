@@ -58,6 +58,15 @@ namespace Implement.Net.Extensions {
 			(t, a) => t.GetProperties(a)
 		);
 
+		internal static PropertyInfo GetPropertyInfo(this Expression expression) => expression switch {
+			null => throw new ArgumentNullException(nameof(expression)),
+			MethodCallExpression => throw new ArgumentOutOfRangeException(nameof(expression), $"{nameof(expression)} must not be a {nameof(MethodCallExpression)}"),
+			LambdaExpression le => le.Body.GetPropertyInfo(),
+			UnaryExpression ue => ue.Operand.GetPropertyInfo(),
+			MemberExpression me => me.Member as PropertyInfo ?? throw new InvalidOperationException($"{nameof(expression)}.{nameof(me.Member)} must be a {nameof(PropertyInfo)}"),
+			_ => throw new ArgumentOutOfRangeException(nameof(expression))
+		};
+
 		private static IEnumerable<TMember> GetMembersRecursive<TMember>(Type type, BindingFlags bindingAttr, Func<Type, BindingFlags, TMember[]> getMembers) where TMember : MemberInfo {
 			List<TMember> result = new ();
 			List<Type> interfaces = new ();

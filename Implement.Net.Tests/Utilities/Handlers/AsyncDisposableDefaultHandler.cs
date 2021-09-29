@@ -25,35 +25,15 @@
 // USA
 
 using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
-namespace Implement.Net.Reflection {
-	internal static class Types {
-		internal static readonly Type Boolean = typeof(bool);
+namespace Implement.Net.Tests.Utilities.Handlers {
+	internal sealed class AsyncDisposableDefaultHandler : DefaultHandler, IAsyncDisposable {
+		internal bool Disposed { get; private set; }
 
-		// ReSharper disable once InconsistentNaming
-		internal static readonly Type IAsyncDisposable = typeof(IAsyncDisposable);
-
-		// ReSharper disable once InconsistentNaming
-		internal static readonly Type IDisposable = typeof(IDisposable);
-
-		// ReSharper disable once InconsistentNaming
-		internal static readonly Type IDynamicHandler = typeof(IDynamicHandler);
-
-		internal static readonly Type InvalidCastException = typeof(InvalidCastException);
-
-		internal static readonly Type NotImplementedException = typeof(NotImplementedException);
-
-		internal static readonly Type Object = typeof(object);
-
-		internal static readonly Type ObjectList = typeof(List<object?>);
-
-		internal static readonly Type TaskAwaiter = typeof(TaskAwaiter);
-
-		internal static readonly Type ValueTask = typeof(ValueTask);
-
-		internal static readonly Type Void = typeof(void);
+		public ValueTask DisposeAsync() {
+			Disposed = true;
+			return ValueTask.CompletedTask;
+		}
 	}
 }

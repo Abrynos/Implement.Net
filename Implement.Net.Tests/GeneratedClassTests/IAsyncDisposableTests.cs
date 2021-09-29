@@ -26,6 +26,7 @@
 
 using System;
 using System.Reflection;
+using System.Threading.Tasks;
 using Implement.Net.Tests.Utilities;
 using Implement.Net.Tests.Utilities.Handlers;
 using Implement.Net.Tests.Utilities.Interfaces;
@@ -34,7 +35,8 @@ using Xunit;
 namespace Implement.Net.Tests.GeneratedClassTests {
 	// ReSharper disable once InconsistentNaming
 #pragma warning disable CA2000
-	public sealed class IDisposableTests : AbstractGeneratedInstanceTest {
+#pragma warning disable CA2007
+	public sealed class IAsyncDisposableTests : AbstractGeneratedInstanceTest {
 		private static readonly MethodInfo Finalize = typeof(object).GetMethod("Finalize", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)!;
 
 		[Fact]
@@ -42,45 +44,45 @@ namespace Implement.Net.Tests.GeneratedClassTests {
 			Options.EnforceDisposable = true;
 			Type type = TypeFactory.CreateType<IEmptyInterface>(Options);
 
-			Assert.True(type.IsAssignableTo(typeof(IDisposable)));
+			Assert.True(type.IsAssignableTo(typeof(IAsyncDisposable)));
 		}
 
 		[Fact]
-		public void DisposesHandlerIfNeededByBooleanOption() {
+		public async Task DisposesHandlerIfNeededByBooleanOption() {
 			Options.EnforceDisposable = true;
 			Type type = TypeFactory.CreateType<IEmptyInterface>(Options);
 
-			DisposableDefaultHandler handler = new ();
+			AsyncDisposableDefaultHandler handler = new ();
 			IEmptyInterface instance = CreateInstance<IEmptyInterface>(type, handler);
 
-			Dispose(instance);
+			await DisposeAsync(instance);
 			Assert.True(handler.Disposed);
 		}
 
 		[Fact]
-		public void DisposesHandlerIfNeededByHandlerType() {
-			Options.HandlerType = typeof(DisposableDefaultHandler);
+		public async Task DisposesHandlerIfNeededByHandlerType() {
+			Options.HandlerType = typeof(AsyncDisposableDefaultHandler);
 			Type type = TypeFactory.CreateType<IEmptyInterface>(Options);
 
-			DisposableDefaultHandler handler = new ();
+			AsyncDisposableDefaultHandler handler = new ();
 			IEmptyInterface instance = CreateInstance<IEmptyInterface>(type, handler);
 
-			Dispose(instance);
+			await DisposeAsync(instance);
 			Assert.True(handler.Disposed);
 		}
 
 		[Fact]
-		public void DisposesHandlerIfNeededByInterface() {
-			DisposableDefaultHandler handler = new ();
-			IEmptyIDisposableInterface instance = CreateInstance<IEmptyIDisposableInterface>(handler);
+		public async Task DisposesHandlerIfNeededByInterface() {
+			AsyncDisposableDefaultHandler handler = new ();
+			IEmptyIAsyncDisposableInterface instance = CreateInstance<IEmptyIAsyncDisposableInterface>(handler);
 
-			Dispose(instance);
+			await DisposeAsync(instance);
 			Assert.True(handler.Disposed);
 		}
 
 		[Fact]
 		public void DisposesInFinalize() {
-			DisposableDefaultHandler handler = new ();
+			AsyncDisposableDefaultHandler handler = new ();
 			Options.HandlerType = handler.GetType();
 			Type type = TypeFactory.CreateType<IEmptyInterface>(Options);
 
@@ -91,23 +93,23 @@ namespace Implement.Net.Tests.GeneratedClassTests {
 		}
 
 		[Fact]
-		public void DisposesNothingIfNotNecessary() {
+		public async Task DisposesNothingIfNotNecessary() {
 			Options.EnforceDisposable = true;
 			Type type = TypeFactory.CreateType<IEmptyIDisposableInterface>(Options);
 
 			IEmptyIDisposableInterface instance = CreateInstance<IEmptyIDisposableInterface>(type, DefaultHandler);
 
-			// We will assume no exception from not trying to call the non-existing Dispose()-method on the handler good enough here.
-			Dispose(instance);
+			// We will assume no exception from not trying to call the non-existing DisposeAsync()-method on the handler good enough here.
+			await DisposeAsync(instance);
 		}
 
 		[Fact]
-		public void DoesNotDisposeDuringGCAfterDisposingManually() {
+		public async Task DoesNotDisposeDuringGCAfterDisposingManually() {
 			uint timesCalled = 0;
-			DisposableCallbackHandler handler = new ();
+			AsyncDisposableCallbackHandler handler = new ();
 			handler.DisposeAction = () => ++timesCalled;
 
-			CreateAndUse(() => CreateInstance<IEmptyIDisposableInterface>(handler), instance => instance.Dispose());
+			await CreateAndUse(() => CreateInstance<IEmptyIAsyncDisposableInterface>(handler), instance => instance.DisposeAsync().AsTask());
 
 			GC.Collect();
 			GC.WaitForPendingFinalizers();
@@ -123,30 +125,30 @@ namespace Implement.Net.Tests.GeneratedClassTests {
 			DefaultHandler handler = new ();
 			IEmptyInterface instance = CreateInstance<IEmptyInterface>(type, handler);
 
-			// We will assume no exception from not trying to call the non-existing Dispose()-method on the handler good enough here.
+			// We will assume no exception from not trying to call the non-existing DisposeAsync()-method on the handler good enough here.
 			Finalize.Invoke(instance, Array.Empty<object>());
 		}
 
 		[Fact]
-		public void Exception() {
-			DisposableCallbackHandler handler = new ();
+		public async Task Exception() {
+			AsyncDisposableCallbackHandler handler = new ();
 			handler.DisposeAction = () => throw new TestException();
 
-			IEmptyIDisposableInterface instance = CreateInstance<IEmptyIDisposableInterface>(handler);
+			IEmptyIAsyncDisposableInterface instance = CreateInstance<IEmptyIAsyncDisposableInterface>(handler);
 
-			Assert.Throws<TestException>(instance.Dispose);
+			await Assert.ThrowsAsync<TestException>(() => instance.DisposeAsync().AsTask());
 
 			// Cleanup - garbage collector will try to dispose this later and an exception could mess up other tests running at the same time
 			handler.DisposeAction = () => { };
 		}
 
 		[Fact]
-		public void FinalizeCalledByGC() {
-			DisposableDefaultHandler handler = new ();
+		public async Task FinalizeCalledByGC() {
+			AsyncDisposableDefaultHandler handler = new ();
 			Options.HandlerType = handler.GetType();
 			Type type = TypeFactory.CreateType<IEmptyInterface>(Options);
 
-			CreateAndUse(() => CreateInstance<IEmptyInterface>(type, handler));
+			await CreateAndUse(() => CreateInstance<IEmptyInterface>(type, handler));
 
 			GC.Collect();
 			GC.WaitForPendingFinalizers();
@@ -156,29 +158,29 @@ namespace Implement.Net.Tests.GeneratedClassTests {
 
 		[Fact]
 		public void HandlerTypeForcesImplementation() {
-			Options.HandlerType = typeof(DisposableDefaultHandler);
+			Options.HandlerType = typeof(AsyncDisposableDefaultHandler);
 			Type type = TypeFactory.CreateType<IEmptyInterface>(Options);
 
-			bool assignable = type.IsAssignableTo(typeof(IDisposable));
+			bool assignable = type.IsAssignableTo(typeof(IAsyncDisposable));
 			Assert.True(assignable);
 		}
 
 		[Fact]
 		public void InterfaceForcesImplementation() {
-			Type type = TypeFactory.CreateType<IEmptyIDisposableInterface>();
+			Type type = TypeFactory.CreateType<IEmptyIAsyncDisposableInterface>();
 
-			bool assignable = type.IsAssignableTo(typeof(IDisposable));
+			bool assignable = type.IsAssignableTo(typeof(IAsyncDisposable));
 			Assert.True(assignable);
 		}
 
 		[Fact]
-		public void NoForwardingToHandler() {
+		public async Task NoForwardingToHandler() {
 			bool called = false;
 			CallbackHandler.MethodInvoker = MethodInvoker(true, () => called = true);
-			Type type = TypeFactory.CreateType<IEmptyIDisposableInterface>();
-			IEmptyIDisposableInterface instance = CreateInstance<IEmptyIDisposableInterface>(type, CallbackHandler);
+			Type type = TypeFactory.CreateType<IEmptyIAsyncDisposableInterface>();
+			IEmptyIAsyncDisposableInterface instance = CreateInstance<IEmptyIAsyncDisposableInterface>(type, CallbackHandler);
 
-			Dispose(instance);
+			await DisposeAsync(instance);
 			Assert.False(called);
 		}
 
@@ -186,24 +188,25 @@ namespace Implement.Net.Tests.GeneratedClassTests {
 		public void NoImplementation() {
 			Type type = TypeFactory.CreateType<IEmptyInterface>();
 
-			bool assignable = type.IsAssignableTo(typeof(IDisposable));
+			bool assignable = type.IsAssignableTo(typeof(IAsyncDisposable));
 			Assert.False(assignable);
 		}
 
 		// We use this method to test the garbage collector
 		// If the creator really creates a new instance and the action does not save a reference to it, it will be in a collectible state after the function finishes execution
-		private static void CreateAndUse<T>(Func<T> creator, Action<T>? action = null) {
+		private static async Task CreateAndUse<T>(Func<T> creator, Func<T, Task>? action = null) {
 			T instance = creator();
-			action?.Invoke(instance);
+			await (action?.Invoke(instance) ?? Task.CompletedTask);
 		}
 
-		private static void Dispose(object obj) {
-			if (obj is not IDisposable disposable) {
+		private static ValueTask DisposeAsync(object obj) {
+			if (obj is not IAsyncDisposable asyncDisposable) {
 				throw new InvalidOperationException();
 			}
 
-			disposable.Dispose();
+			return asyncDisposable.DisposeAsync();
 		}
 	}
+#pragma warning restore CA2007
 #pragma warning restore CA2000
 }
