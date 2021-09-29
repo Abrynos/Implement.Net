@@ -695,6 +695,7 @@ namespace Implement.Net {
 
 				if (checkInstance) {
 					// } else { // this.[handlerField] is not IAsyncDisposable
+					generator.MarkLabel(disposeSyncLabel);
 
 					// if we don't know whether the handler is IDisposable for sure, we need to check the instance once again
 					if (!isAlwaysSyncDisposable) {
@@ -706,8 +707,6 @@ namespace Implement.Net {
 						generator.Emit(OpCodes.Cgt_Un);
 						generator.Emit(OpCodes.Brfalse_S, doNothingLabel);
 					}
-
-					generator.MarkLabel(disposeSyncLabel);
 
 					// this.[handlerField].Dispose();
 					generator.Emit(OpCodes.Ldarg_0);
